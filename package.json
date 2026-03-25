@@ -1,0 +1,18 @@
+{
+  "name": "match3-neon",
+  "version": "1.0.0",
+  "description": "Neon Cyberpunk Match-3 Game",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "phaser": "^3.80.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "vite": "^5.0.0"
+  }
+}
