@@ -168,6 +168,11 @@ export class MainMenuScene extends Phaser.Scene {
       fontSize: '24px',
       color: '#666688',
     }).setOrigin(0.5);
+
+    // Quick test: Tile showcase button
+    const showcaseBtn = this.createButton(width / 2, 700, 'TILE TEST', 0x0066FF, () => {
+      this.scene.start('TileShowcaseScene');
+    });
   }
 
   private createButton(
