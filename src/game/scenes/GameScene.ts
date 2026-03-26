@@ -189,8 +189,10 @@ export class GameScene extends Phaser.Scene {
         goalText = `SCORE: ${this.score}/${this.levelConfig.goalValue}`;
         break;
       case LevelGoalType.COLLECT_COLOR:
-        const colorHex = TILE_COLORS[this.levelConfig.targetColor!].toString(16).padStart(6, '0');
         goalText = `COLLECT: ${this.collectedColor}/${this.levelConfig.goalValue}`;
+        const targetColor = TILE_COLORS[this.levelConfig.targetColor!];
+        this.add.circle(width - 110, 42, 10, targetColor);
+        this.add.circle(width - 110, 42, 12, 0x000000, 0.5).setStrokeStyle(1, 0xFFFFFF);
         break;
     }
 
@@ -435,6 +437,14 @@ export class GameScene extends Phaser.Scene {
       }
 
       await this.animateAbilityEffect(result.tiles, result.bonusTiles || []);
+      
+      if (this.levelConfig.goalType === LevelGoalType.COLLECT_COLOR) {
+        for (const tile of result.tiles) {
+          if (tile.color === this.levelConfig.targetColor) {
+            this.collectedColor++;
+          }
+        }
+      }
 
       const fallInfo = this.board.removeDestroyedTiles();
       await this.animateFall(fallInfo);
@@ -964,6 +974,15 @@ export class GameScene extends Phaser.Scene {
     await this.animateBoosterActivation(affected, row, col, BonusType.BOMB);
     
     this.score += affected.length * 50;
+    
+    if (this.levelConfig.goalType === LevelGoalType.COLLECT_COLOR) {
+      for (const tile of affected) {
+        if (tile.color === this.levelConfig.targetColor) {
+          this.collectedColor++;
+        }
+      }
+    }
+    
     this.movesLeft--;
     this.updateUI();
     
@@ -994,6 +1013,15 @@ export class GameScene extends Phaser.Scene {
     await this.animateBoosterActivation(affected, row, col, tile.bonus);
     
     this.score += affected.length * 100;
+    
+    if (this.levelConfig.goalType === LevelGoalType.COLLECT_COLOR) {
+      for (const t of affected) {
+        if (t.color === this.levelConfig.targetColor) {
+          this.collectedColor++;
+        }
+      }
+    }
+    
     this.movesLeft--;
     
     if (!this.abilityReady && this.comboCount < 3) {
@@ -1197,6 +1225,15 @@ export class GameScene extends Phaser.Scene {
     if (tile1 && tile1.bonus !== BonusType.NONE) {
       const affected = this.board.activateBonus(tile1.bonus, r1, c1);
       await this.animateBoosterActivation(affected, r1, c1, tile1.bonus);
+      
+      if (this.levelConfig.goalType === LevelGoalType.COLLECT_COLOR) {
+        for (const t of affected) {
+          if (t.color === this.levelConfig.targetColor) {
+            this.collectedColor++;
+          }
+        }
+      }
+      
       await this.handlePostBooster();
       this.isProcessing = false;
       return;
@@ -1205,6 +1242,15 @@ export class GameScene extends Phaser.Scene {
     if (tile2 && tile2.bonus !== BonusType.NONE) {
       const affected = this.board.activateBonus(tile2.bonus, r2, c2);
       await this.animateBoosterActivation(affected, r2, c2, tile2.bonus);
+      
+      if (this.levelConfig.goalType === LevelGoalType.COLLECT_COLOR) {
+        for (const t of affected) {
+          if (t.color === this.levelConfig.targetColor) {
+            this.collectedColor++;
+          }
+        }
+      }
+      
       await this.handlePostBooster();
       this.isProcessing = false;
       return;
