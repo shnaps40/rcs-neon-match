@@ -6,15 +6,15 @@ import { generateLevel, LevelConfig, LevelGoalType } from '../../meta/LevelSyste
 import { getCharacterById, AbilityType, CHARACTERS } from '../../characters/CharacterSystem';
 import { audioManager } from '../../audio/AudioManager';
 
-const TILE_SIZE = 48;
+const TILE_SIZE = 52;
 const TILE_COLORS: Record<TileColor, number> = {
-  [TileColor.CYAN]: 0xFF3333,
-  [TileColor.PINK]: 0x3366FF,
-  [TileColor.BLUE]: 0x33FF66,
-  [TileColor.GREEN]: 0xFFFF33,
-  [TileColor.YELLOW]: 0xFF9933,
-  [TileColor.PURPLE]: 0xCC33FF,
-  [TileColor.BOOSTER]: 0x000000,
+  [TileColor.CYAN]:    0x00FFFF, // #00FFFF голубой
+  [TileColor.PINK]:    0xFF00FF, // #FF00FF розовый
+  [TileColor.BLUE]:    0x0066FF, // #0066FF синий
+  [TileColor.GREEN]:   0x00FF66, // #00FF66 зелёный
+  [TileColor.YELLOW]:  0xFFFF00, // #FFFF00 жёлтый
+  [TileColor.PURPLE]:  0x9900FF, // #9900FF фиолетовый
+  [TileColor.BOOSTER]: 0x111122,
 };
 
 const BONUS_COLORS: Record<BonusType, number> = {
@@ -138,76 +138,93 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createUI(): void {
-    const { width } = this.cameras.main;
-    
-    const headerBg = this.add.graphics();
-    headerBg.fillStyle(0x1A1A2E, 0.8);
-    headerBg.fillRect(0, 0, width, 55);
+    const { width, height } = this.cameras.main;
 
-    const characterY = 130;
+    // === HEADER BAR (60px) ===
+    const headerBg = this.add.graphics();
+    headerBg.fillStyle(0x0D0D1F, 0.95);
+    headerBg.fillRect(0, 0, width, 62);
+    headerBg.lineStyle(1, 0x00FFFF, 0.3);
+    headerBg.lineBetween(0, 62, width, 62);
+
     const character = getCharacterById(this.characterId);
+
+    // Portrait (small, in header)
     if (character) {
-      const portraitBg = this.add.graphics();
-      portraitBg.fillStyle(0x0A0A1A, 1);
-      portraitBg.fillRoundedRect(20, characterY - 50, 104, 104, 8);
-      portraitBg.lineStyle(3, 0x00FFFF, 1);
-      portraitBg.strokeRoundedRect(20, characterY - 50, 104, 104, 8);
-      portraitBg.lineStyle(1, 0xFF00FF, 0.5);
-      portraitBg.strokeRoundedRect(18, characterY - 52, 108, 108, 10);
-      
-      const portrait = this.add.image(72, characterY, character.image);
-      portrait.setDisplaySize(100, 100);
-      
-      this.add.text(140, characterY - 40, character.shortName.toUpperCase(), {
+      const portrait = this.add.image(30, 31, character.image);
+      portrait.setDisplaySize(44, 44);
+
+      const portraitBorder = this.add.graphics();
+      portraitBorder.lineStyle(2, 0x00FFFF, 1);
+      portraitBorder.strokeRoundedRect(8, 9, 44, 44, 6);
+
+      this.add.text(60, 14, character.shortName.toUpperCase(), {
         fontFamily: 'Orbitron',
-        fontSize: '16px',
+        fontSize: '13px',
+        fontStyle: 'bold',
         color: '#00FFFF',
       });
-      
-      this.add.text(140, characterY - 18, `RCS#${character.id.replace('rcs_', '')}`, {
+      this.add.text(60, 33, `RCS#${character.id.replace('rcs_', '')}`, {
         fontFamily: 'Orbitron',
-        fontSize: '12px',
+        fontSize: '10px',
         color: '#FF00FF',
       });
     }
 
-    this.add.text(170, 42, `LVL ${this.levelConfig.level}`, {
+    // LVL — centre
+    this.add.text(width / 2, 12, `LVL ${this.levelConfig.level}`, {
       fontFamily: 'Orbitron',
-      fontSize: '12px',
-      color: '#00FFFF',
-    });
+      fontSize: '11px',
+      color: '#666688',
+    }).setOrigin(0.5, 0);
 
-    this.add.text(220, 42, `MOVES: ${this.movesLeft}`, {
+    // MOVES — centre-large
+    this.add.text(width / 2, 26, `${this.movesLeft}`, {
       fontFamily: 'Orbitron',
-      fontSize: '12px',
-      color: '#FF00FF',
-    });
+      fontSize: '20px',
+      fontStyle: 'bold',
+      color: '#FFFFFF',
+    }).setOrigin(0.5, 0).setName('movesNumber');
 
+    this.add.text(width / 2, 48, 'MOVES', {
+      fontFamily: 'Orbitron',
+      fontSize: '9px',
+      color: '#555577',
+    }).setOrigin(0.5, 0);
+
+    // GOAL — right side
     let goalText = '';
     switch (this.levelConfig.goalType) {
       case LevelGoalType.SCORE:
-        goalText = `SCORE: ${this.score}/${this.levelConfig.goalValue}`;
+        goalText = `${this.score}\n/${this.levelConfig.goalValue}`;
         break;
-      case LevelGoalType.COLLECT_COLOR:
-        goalText = `COLLECT: ${this.collectedColor}/${this.levelConfig.goalValue}`;
+      case LevelGoalType.COLLECT_COLOR: {
+        goalText = `${this.collectedColor}/${this.levelConfig.goalValue}`;
         const targetColor = TILE_COLORS[this.levelConfig.targetColor!];
-        this.add.circle(width - 110, 42, 10, targetColor);
-        this.add.circle(width - 110, 42, 12, 0x000000, 0.5).setStrokeStyle(1, 0xFFFFFF);
+        // colour swatch
+        const swatch = this.add.graphics();
+        swatch.fillStyle(targetColor, 1);
+        swatch.fillCircle(width - 52, 20, 9);
+        swatch.lineStyle(1.5, 0xFFFFFF, 0.6);
+        swatch.strokeCircle(width - 52, 20, 9);
         break;
+      }
     }
-
-    this.add.text(width - 15, 42, goalText, {
+    this.add.text(width - 10, 12, goalText, {
       fontFamily: 'Orbitron',
-      fontSize: '12px',
+      fontSize: '11px',
       color: '#00FF66',
-    }).setOrigin(1, 0);
+      align: 'right',
+    }).setOrigin(1, 0).setName('goalDisplay');
 
-    const backBtn = this.add.text(20, this.cameras.main.height - 30, '← BACK', {
+    // BACK button (bottom)
+    const backBtn = this.add.text(20, height - 22, '← BACK', {
       fontFamily: 'Orbitron',
-      fontSize: '16px',
-      color: '#666688',
+      fontSize: '13px',
+      color: '#444466',
     }).setInteractive({ useHandCursor: true });
-    
+    backBtn.on('pointerover', () => backBtn.setColor('#00FFFF'));
+    backBtn.on('pointerout', () => backBtn.setColor('#444466'));
     backBtn.on('pointerdown', () => {
       this.scene.start('MainMenuScene');
     });
@@ -220,7 +237,7 @@ export class GameScene extends Phaser.Scene {
     const boardHeight = boardSize * TILE_SIZE;
     
     const startX = (width - boardWidth) / 2 + TILE_SIZE / 2;
-    const startY = (height - boardHeight) / 2 + 60 + TILE_SIZE / 2;
+    const startY = (height - boardHeight) / 2 + 62 + TILE_SIZE / 2;
 
     const boardBg = this.add.graphics();
     boardBg.fillStyle(0x1A1A2E, 0.7);
@@ -247,17 +264,28 @@ export class GameScene extends Phaser.Scene {
     const { width, height } = this.cameras.main;
     const boardSize = this.levelConfig.gridSize;
     const boardHeight = boardSize * TILE_SIZE;
-    const boardStartY = (height - boardHeight) / 2 + 60;
-    const bottomY = boardStartY + boardHeight + 30;
+    const boardStartY = (height - boardHeight) / 2 + 62;
+    const panelY = boardStartY + boardHeight + 6;
+    const panelH = 58;
 
-    this.comboText = this.add.text(width / 2 - 80, bottomY, `COMBO: ${this.comboCount}/3`, {
+    // Bottom panel background
+    const panelBg = this.add.graphics();
+    panelBg.fillStyle(0x0D0D1F, 0.92);
+    panelBg.fillRoundedRect(8, panelY, width - 16, panelH, 12);
+    panelBg.lineStyle(1, 0x1A1A3A, 1);
+    panelBg.strokeRoundedRect(8, panelY, width - 16, panelH, 12);
+
+    const btnY = panelY + panelH / 2;
+
+    this.comboText = this.add.text(width / 2 - 75, btnY, `COMBO\n${this.comboCount}/3`, {
       fontFamily: 'Orbitron',
-      fontSize: '16px',
-      color: this.abilityReady ? '#00FF66' : '#888888',
+      fontSize: '11px',
+      color: this.abilityReady ? '#00FF66' : '#555577',
+      align: 'center',
     }).setOrigin(0.5);
 
-    this.abilityButton = this.createAbilityButton(width / 2 + 60, bottomY);
-    this.hammerButton = this.createHammerButton(width / 2 + 120, bottomY);
+    this.abilityButton = this.createAbilityButton(width / 2 + 12, btnY);
+    this.hammerButton = this.createHammerButton(width / 2 + 68, btnY);
   }
 
   private createAbilityButton(x: number, y: number): Phaser.GameObjects.Container {
@@ -364,8 +392,8 @@ export class GameScene extends Phaser.Scene {
   private updateAbilityUI(): void {
     if (!this.abilityButton || !this.comboText) return;
 
-    this.comboText.setText(`COMBO: ${this.comboCount}/3`);
-    this.comboText.setColor(this.abilityReady ? '#00FF66' : '#888888');
+    this.comboText.setText(`COMBO\n${this.comboCount}/3`);
+    this.comboText.setColor(this.abilityReady ? '#00FF66' : '#555577');
 
     this.abilityButton.destroy();
     this.abilityButton = this.createAbilityButton(this.abilityButton.x, this.abilityButton.y);
@@ -470,7 +498,7 @@ export class GameScene extends Phaser.Scene {
     const boardSize = this.levelConfig.gridSize;
     const boardWidth = boardSize * TILE_SIZE;
     const boardHeight = boardSize * TILE_SIZE;
-    const startY = (height - boardHeight) / 2 + 60 + TILE_SIZE / 2;
+    const startY = (height - boardHeight) / 2 + 62 + TILE_SIZE / 2;
     const startX = (width - boardWidth) / 2 + TILE_SIZE / 2;
 
     const flash = this.add.graphics();
@@ -506,14 +534,14 @@ export class GameScene extends Phaser.Scene {
     if (!container || !tile) return;
 
     const isBooster = tile.bonus !== BonusType.NONE;
-    const color = isBooster ? 0x000000 : TILE_COLORS[tile.color];
+    const color = isBooster ? 0x333366 : TILE_COLORS[tile.color];
     const half = TILE_SIZE / 2 - 2;
-    
-    const bg = container.list[0] as Phaser.GameObjects.Graphics;
-    const border = container.list[1] as Phaser.GameObjects.Graphics;
-    
+
+    const bg = container.list[1] as Phaser.GameObjects.Graphics;
+    const border = container.list[2] as Phaser.GameObjects.Graphics;
+
     bg.clear();
-    bg.fillStyle(color, isBooster ? 0.9 : 0.6);
+    bg.fillStyle(color, isBooster ? 0.85 : 0.55);
     
     if (isBooster) {
       this.drawHexagon(bg, 0, 0, half);
@@ -544,12 +572,19 @@ export class GameScene extends Phaser.Scene {
     container.setSize(TILE_SIZE, TILE_SIZE);
 
     const isBooster = tile.bonus !== BonusType.NONE;
-    const color = isBooster ? 0x000000 : TILE_COLORS[tile.color];
+    const color = isBooster ? 0x333366 : TILE_COLORS[tile.color];
     const half = TILE_SIZE / 2 - 2;
     const s = TILE_SIZE - 4;
-    
+
+    // Neon glow beneath the tile
+    const glow = this.add.graphics();
+    if (!isBooster) {
+      glow.fillStyle(color, 0.18);
+      glow.fillCircle(0, 0, half + 4);
+    }
+
     const bg = this.add.graphics();
-    bg.fillStyle(color, isBooster ? 0.9 : 0.6);
+    bg.fillStyle(color, isBooster ? 0.85 : 0.55);
     
     if (isBooster) {
       this.drawHexagon(bg, 0, 0, half);
@@ -607,7 +642,7 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    container.add([bg, border]);
+    container.add([glow, bg, border]);
     container.setData('row', row);
     container.setData('col', col);
 
@@ -1057,7 +1092,7 @@ export class GameScene extends Phaser.Scene {
     const boardSize = this.levelConfig.gridSize;
     const boardWidth = boardSize * TILE_SIZE;
     const boardHeight = boardSize * TILE_SIZE;
-    const startY = (height - boardHeight) / 2 + 60 + TILE_SIZE / 2;
+    const startY = (height - boardHeight) / 2 + 62 + TILE_SIZE / 2;
     const startX = (width - boardWidth) / 2 + TILE_SIZE / 2;
 
     const centerX = startX + col * TILE_SIZE;
@@ -1107,7 +1142,7 @@ export class GameScene extends Phaser.Scene {
     const boardSize = this.levelConfig.gridSize;
     const boardWidth = boardSize * TILE_SIZE;
     const boardHeight = boardSize * TILE_SIZE;
-    const startY = (height - boardHeight) / 2 + 60 + TILE_SIZE / 2;
+    const startY = (height - boardHeight) / 2 + 62 + TILE_SIZE / 2;
     const startX = (width - boardWidth) / 2 + TILE_SIZE / 2;
 
     const targetX = startX + targetCol * TILE_SIZE;
@@ -1158,7 +1193,7 @@ export class GameScene extends Phaser.Scene {
     const tile = this.board.getTile(row, col)!;
     const color = TILE_COLORS[tile.color];
     
-    const border = container.list[1] as Phaser.GameObjects.Graphics;
+    const border = container.list[2] as Phaser.GameObjects.Graphics;
     if (!border) return;
     border.clear();
     
@@ -1211,9 +1246,11 @@ export class GameScene extends Phaser.Scene {
       
       if (superResult.created && superResult.newBonus) {
         this.score += 200;
+        this.movesLeft--;
         this.updateTileViewForBonus(r2, c2);
         this.updateTileViewForBonus(r1, c1);
         this.updateUI();
+        this.checkWinLose();
         this.isProcessing = false;
         return;
       }
@@ -1311,7 +1348,7 @@ export class GameScene extends Phaser.Scene {
     const boardWidth = boardSize * TILE_SIZE;
     const boardHeight = boardSize * TILE_SIZE;
     const startX = (width - boardWidth) / 2 + TILE_SIZE / 2;
-    const startY = (height - boardHeight) / 2 + 60 + TILE_SIZE / 2;
+    const startY = (height - boardHeight) / 2 + 62 + TILE_SIZE / 2;
     
     for (let row = 0; row < boardSize; row++) {
       for (let col = 0; col < boardSize; col++) {
@@ -1368,7 +1405,7 @@ export class GameScene extends Phaser.Scene {
     const boardHeight = boardSize * TILE_SIZE;
     
     const startX = (width - boardWidth) / 2 + TILE_SIZE / 2;
-    const startY = (height - boardHeight) / 2 + 60 + TILE_SIZE / 2;
+    const startY = (height - boardHeight) / 2 + 62 + TILE_SIZE / 2;
     
     return {
       x: startX + col * TILE_SIZE,
@@ -1401,7 +1438,7 @@ export class GameScene extends Phaser.Scene {
     const boardSize = this.levelConfig.gridSize;
     const boardWidth = boardSize * TILE_SIZE;
     const boardHeight = boardSize * TILE_SIZE;
-    const startY = (height - boardHeight) / 2 + 60 + TILE_SIZE / 2;
+    const startY = (height - boardHeight) / 2 + 62 + TILE_SIZE / 2;
 
     // Animate falling tiles
     const fallPromises: Promise<void>[] = [];
@@ -1439,9 +1476,12 @@ export class GameScene extends Phaser.Scene {
     }
 
     // Create new tiles above the board and animate them falling
-    for (const { row, col } of fallInfo.newTiles) {
+    for (let i = 0; i < fallInfo.newTiles.length; i++) {
+      const { row, col } = fallInfo.newTiles[i];
       const x = (width - boardWidth) / 2 + TILE_SIZE / 2 + col * TILE_SIZE;
-      const container = this.createTileView(row, col, x, startY - TILE_SIZE * (fallInfo.newTiles.length - fallInfo.newTiles.indexOf({ row, col })));
+      // Spawn above the board: offset by how many new tiles appear above this one
+      const spawnY = startY - TILE_SIZE * (i + 1);
+      const container = this.createTileView(row, col, x, spawnY);
       container.setData('currentRow', row);
       container.setData('currentCol', col);
       container.alpha = 0;
@@ -1479,7 +1519,7 @@ export class GameScene extends Phaser.Scene {
     const boardSize = this.levelConfig.gridSize;
     const boardWidth = boardSize * TILE_SIZE;
     const boardHeight = boardSize * TILE_SIZE;
-    const startY = (height - boardHeight) / 2 + 60 + TILE_SIZE / 2;
+    const startY = (height - boardHeight) / 2 + 62 + TILE_SIZE / 2;
     const startX = (width - boardWidth) / 2 + TILE_SIZE / 2;
 
     // Fade out all tiles
@@ -1593,7 +1633,7 @@ export class GameScene extends Phaser.Scene {
     const boardHeight = boardSize * TILE_SIZE;
     
     const startX = (width - boardWidth) / 2 + TILE_SIZE / 2;
-    const startY = (height - boardHeight) / 2 + 60 + TILE_SIZE / 2;
+    const startY = (height - boardHeight) / 2 + 62 + TILE_SIZE / 2;
 
     for (let row = 0; row < boardSize; row++) {
       for (let col = 0; col < boardSize; col++) {
@@ -1658,45 +1698,31 @@ export class GameScene extends Phaser.Scene {
   }
 
   private clearBonusIcon(container: Phaser.GameObjects.Container): void {
-    const iconIndex = container.list.findIndex(
+    // Remove all Text children (bonus icon + any stale icons)
+    const toRemove = container.list.filter(
       child => child instanceof Phaser.GameObjects.Text
-    );
-    if (iconIndex > -1) {
-      container.removeAt(iconIndex);
-    }
+    ) as Phaser.GameObjects.Text[];
+    toRemove.forEach(child => container.remove(child, true));
   }
 
   private updateUI(): void {
-    const { width } = this.cameras.main;
-    
-    let goalText = '';
-    switch (this.levelConfig.goalType) {
-      case LevelGoalType.SCORE:
-        goalText = `SCORE: ${this.score}/${this.levelConfig.goalValue}`;
-        break;
-      case LevelGoalType.COLLECT_COLOR:
-        goalText = `COLLECT: ${this.collectedColor}/${this.levelConfig.goalValue}`;
-        break;
+    // Update moves number (centre header)
+    const movesNum = this.children.getByName('movesNumber') as Phaser.GameObjects.Text | null;
+    if (movesNum) {
+      movesNum.setText(`${this.movesLeft}`);
     }
 
-    const goalTextObj = this.children.list.find(
-      (obj): obj is Phaser.GameObjects.Text => 
-        obj instanceof Phaser.GameObjects.Text && 
-        (obj.text.includes('SCORE:') || obj.text.includes('COLLECT:'))
-    );
-    
-    if (goalTextObj) {
-      goalTextObj.setText(goalText);
-    }
-
-    const movesText = this.children.list.find(
-      (obj): obj is Phaser.GameObjects.Text => 
-        obj instanceof Phaser.GameObjects.Text && 
-        obj.text.includes('MOVES:')
-    );
-    
-    if (movesText) {
-      movesText.setText(`MOVES: ${this.movesLeft}`);
+    // Update goal display (right header)
+    const goalDisplay = this.children.getByName('goalDisplay') as Phaser.GameObjects.Text | null;
+    if (goalDisplay) {
+      switch (this.levelConfig.goalType) {
+        case LevelGoalType.SCORE:
+          goalDisplay.setText(`${this.score}\n/${this.levelConfig.goalValue}`);
+          break;
+        case LevelGoalType.COLLECT_COLOR:
+          goalDisplay.setText(`${this.collectedColor}/${this.levelConfig.goalValue}`);
+          break;
+      }
     }
   }
 

@@ -203,6 +203,12 @@ export class Board {
     }
 
     if (horizontal >= 3 && vertical >= 3) {
+      // Distinguish T-shape (tiles span 3+ rows OR 3+ cols) from L-shape (corner)
+      const rowSet = new Set(group.map(t => t.row));
+      const colSet = new Set(group.map(t => t.col));
+      if (rowSet.size >= 3 || colSet.size >= 3) {
+        return this.createMatchInfo('t_shape', group, spawnRow, spawnCol);
+      }
       return this.createMatchInfo('l_shape', group, spawnRow, spawnCol);
     }
 
@@ -468,9 +474,24 @@ export class Board {
         }
         break;
 
-      case BonusType.COLOR_BOMB:
-        if (centerTile) {
-          const targetColor = centerTile.color;
+      case BonusType.COLOR_BOMB: {
+        // Find a neighbouring non-booster tile to determine target color.
+        // If swapped with another tile the swap partner's color is used;
+        // here we pick the first adjacent non-booster as fallback.
+        let targetColor: TileColor | null = null;
+        const adjacent = [
+          this.getTile(row - 1, col),
+          this.getTile(row + 1, col),
+          this.getTile(row, col - 1),
+          this.getTile(row, col + 1),
+        ];
+        for (const adj of adjacent) {
+          if (adj && adj.color !== TileColor.BOOSTER) {
+            targetColor = adj.color;
+            break;
+          }
+        }
+        if (targetColor !== null) {
           for (let r = 0; r < this.rows; r++) {
             for (let c = 0; c < this.cols; c++) {
               const tile = this.getTile(r, c);
@@ -481,6 +502,7 @@ export class Board {
           }
         }
         break;
+      }
 
       case BonusType.SUPER_ROCKET:
         for (let c = 0; c < this.cols; c++) {

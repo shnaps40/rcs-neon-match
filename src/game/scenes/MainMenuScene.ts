@@ -163,16 +163,11 @@ export class MainMenuScene extends Phaser.Scene {
     });
 
     const level = this.saveSystem.getCurrentLevel();
-    this.add.text(width / 2, 640, `LEVEL ${level}`, {
+    this.add.text(width / 2, 630, `LEVEL ${level}`, {
       fontFamily: 'Orbitron',
-      fontSize: '24px',
-      color: '#666688',
+      fontSize: '20px',
+      color: '#444466',
     }).setOrigin(0.5);
-
-    // Quick test: Tile showcase button
-    const showcaseBtn = this.createButton(width / 2, 700, 'TILE TEST', 0x0066FF, () => {
-      this.scene.start('TileShowcaseScene');
-    });
   }
 
   private createButton(
@@ -235,9 +230,9 @@ export class MainMenuScene extends Phaser.Scene {
   private createFooter(): void {
     const { width, height } = this.cameras.main;
 
-    const version = this.add.text(width / 2, height - 20, 'v1.0.0', {
+    this.add.text(width / 2, height - 15, 'v1.0.0 ALPHA', {
       fontFamily: 'Orbitron',
-      fontSize: '12px',
+      fontSize: '11px',
       color: '#333355',
     }).setOrigin(0.5);
   }
