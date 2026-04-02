@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { SaveSystem } from '../../meta/SaveSystem';
 import { audioManager } from '../../audio/AudioManager';
+import { createAudioPanel } from '../../ui/AudioPanel';
 
 export class MainMenuScene extends Phaser.Scene {
   private saveSystem!: SaveSystem;
@@ -8,9 +9,8 @@ export class MainMenuScene extends Phaser.Scene {
   private starsText!: Phaser.GameObjects.Text;
   private energyText!: Phaser.GameObjects.Text;
   private hammersText!: Phaser.GameObjects.Text;
-  private audioToggleBtn!: Phaser.GameObjects.Text;
-  private audioNextBtn!: Phaser.GameObjects.Text;
-  private trackText!: Phaser.GameObjects.Text;
+  // Audio panel (shared UI)
+  private audioPanel!: { panel: Phaser.GameObjects.Container; updateUI: () => void };
 
   constructor() {
     super({ key: 'MainMenuScene' });
@@ -29,7 +29,13 @@ export class MainMenuScene extends Phaser.Scene {
     this.createHeader();
     this.createMenu();
     this.createFooter();
-    this.createAudioPlayer();
+    // Initialize shared AudioPanel UI (already added in previous patch)
+    if (!(this as any).audioPanel) {
+      const ap = createAudioPanel(this);
+      (this as any).audioPanel = ap;
+      this.add.existing(ap.panel);
+      ap.updateUI();
+    }
     
     audioManager.init(this);
   }
@@ -243,47 +249,11 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   private createAudioPlayer(): void {
-    const { width, height } = this.cameras.main;
-    const playerY = height - 60;
-
-    const playerBg = this.add.graphics();
-    playerBg.fillStyle(0x1A1A2E, 0.7);
-    playerBg.fillRoundedRect(width / 2 - 100, playerY - 15, 200, 35, 10);
-    playerBg.setScrollFactor(0);
-
-    this.audioToggleBtn = this.add.text(width / 2 - 50, playerY, '🔊', {
-      fontSize: '20px',
-    }).setInteractive({ useHandCursor: true });
-    this.audioToggleBtn.setScrollFactor(0);
-    this.audioToggleBtn.on('pointerdown', () => {
-      const isEnabled = audioManager.toggle();
-      this.updateAudioButtons();
-    });
-
-    this.trackText = this.add.text(width / 2, playerY, '1/4', {
-      fontFamily: 'Orbitron',
-      fontSize: '12px',
-      color: '#00FFFF',
-    }).setOrigin(0.5);
-    this.trackText.setScrollFactor(0);
-
-    this.audioNextBtn = this.add.text(width / 2 + 50, playerY, '⏭', {
-      fontSize: '20px',
-    }).setInteractive({ useHandCursor: true });
-    this.audioNextBtn.setScrollFactor(0);
-    this.audioNextBtn.on('pointerdown', () => {
-      audioManager.next();
-      this.updateAudioButtons();
-    });
-
-    this.updateAudioButtons();
+    // AudioPanel is used; this method is deprecated in Path B and now a no-op
+    return;
   }
 
-  private updateAudioButtons(): void {
-    const isEnabled = audioManager.isMusicEnabled();
-    this.audioToggleBtn.setText(isEnabled ? '🔊' : '🔇');
-    this.trackText.setText(`${audioManager.getCurrentTrackIndex()}/4`);
-  }
+  // AudioPanel handles UI updates
 
   update(): void {
     if (this.energyText) {
@@ -293,8 +263,9 @@ export class MainMenuScene extends Phaser.Scene {
     if (this.hammersText) {
       this.hammersText.setText(`🔨 ${this.saveSystem.getHammers()}`);
     }
-    if (this.trackText) {
-      this.trackText.setText(`${audioManager.getCurrentTrackIndex()}/4`);
+    // Delegate UI refresh to AudioPanel (if available)
+    if ((this as any).audioPanel && (this as any).audioPanel.updateUI) {
+      (this as any).audioPanel.updateUI();
     }
   }
 }

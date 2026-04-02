@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { SaveSystem } from '../../meta/SaveSystem';
 import { RoomDecor, DECOR_ITEMS, DecorItem } from '../../meta/RoomDecor';
 import { audioManager } from '../../audio/AudioManager';
+import { createAudioPanel } from '../../ui/AudioPanel';
 
 export class RoomScene extends Phaser.Scene {
   private saveSystem!: SaveSystem;
@@ -25,7 +26,11 @@ export class RoomScene extends Phaser.Scene {
     this.createRoom();
     this.createUI();
     this.createShop();
-    this.createAudioPlayer();
+    // Shared audio panel across scenes
+    const ap = createAudioPanel(this);
+    this.add.existing(ap.panel);
+    ap.updateUI();
+    (this as any).audioPanel = ap;
     
     audioManager.init(this);
   }

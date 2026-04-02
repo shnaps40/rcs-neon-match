@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { SaveSystem } from '../../meta/SaveSystem';
 import { CHARACTERS } from '../../characters/CharacterSystem';
 import { audioManager } from '../../audio/AudioManager';
+import { createAudioPanel } from '../../ui/AudioPanel';
 
 export class CharacterSelectScene extends Phaser.Scene {
   private saveSystem!: SaveSystem;
@@ -47,7 +48,11 @@ export class CharacterSelectScene extends Phaser.Scene {
     this.createBackButton();
     this.setupInput();
     this.goToPage(this.currentPage, false);
-    this.createAudioPlayer();
+    // Initialize shared audio panel across scenes
+    const ap = createAudioPanel(this);
+    this.add.existing(ap.panel);
+    ap.updateUI();
+    (this as any).audioPanel = ap;
     
     audioManager.init(this);
   }

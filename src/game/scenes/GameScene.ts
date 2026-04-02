@@ -5,6 +5,7 @@ import { SaveSystem } from '../../meta/SaveSystem';
 import { generateLevel, LevelConfig, LevelGoalType } from '../../meta/LevelSystem';
 import { getCharacterById, AbilityType, CHARACTERS } from '../../characters/CharacterSystem';
 import { audioManager } from '../../audio/AudioManager';
+import { createAudioPanel } from '../../ui/AudioPanel';
 
 const TILE_SIZE = 48;
 const TILE_COLORS: Record<TileColor, number> = {
@@ -52,6 +53,7 @@ export class GameScene extends Phaser.Scene {
   private hammerButton!: Phaser.GameObjects.Container;
   private hammerMode = false;
   private comboText!: Phaser.GameObjects.Text;
+  private audioPanel?: any;
   private audioToggleBtn!: Phaser.GameObjects.Text;
   private audioNextBtn!: Phaser.GameObjects.Text;
   private trackText!: Phaser.GameObjects.Text;
@@ -92,7 +94,11 @@ export class GameScene extends Phaser.Scene {
     this.createBoard();
     this.createAbilityUI();
     this.createInput();
-    this.createAudioPlayer();
+    // Initialize shared AudioPanel UI across scenes
+    const ap = createAudioPanel(this);
+    this.add.existing(ap.panel);
+    ap.updateUI();
+    this.audioPanel = ap as any;
     
     audioManager.init(this);
   }
